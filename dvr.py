@@ -33,6 +33,12 @@ for i in selected_features:
 
 for _, row in df.iterrows():
     row = main(row.to_dict())
-    for key in row.keys():
+    for key in selected_features:
         x = row[key]
         z_score = (x-parameters[key][0])/parameters[key][1]
+        print(f"Parameters:‌{parameters}")
+        print(f"{key} value: {row[key]}, z score:‌{z_score}")
+        # if abs(z_score) > 3:
+            # print(f"{key}: {row[key]} is anomaly data")
+
+# Token: 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
