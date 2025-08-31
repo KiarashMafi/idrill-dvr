@@ -127,3 +127,4 @@ def analyze_window(window_data):
 if __name__ == "__main__":
     consumer = create_consumer()
     aggregate_data(consumer, duration_seconds=60)
+# Token: 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
