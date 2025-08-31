@@ -59,6 +59,9 @@ def process_message(msg):
     if alerts:
         print(f"⚠️ THRESHOLD ALERT for {rig_id}: {' | '.join(alerts)}")
 
+    # This is where all DVR algorithm should be applied on the {data}. data ---> DVR ---> processed_data
+    # print(type(data))
+
     return data
 
 
