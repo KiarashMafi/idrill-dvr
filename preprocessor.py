@@ -4,31 +4,32 @@ import time
 
 
 def handle_missing_values(message):
+
     default_values = {
-        "Depth": 9.931658328379326,
-        "WOB": 1499.1095597598314,
-        "RPM": 80.07053557787066,
-        "Torque": 400.37012959454245,
-        "ROP": 12.015219277468452,
-        "Mud_Flow_Rate": 1198.5587561221755,
-        "Mud_Pressure": 2997.1692880682226,
-        "Mud_Temperature": 60.01337852862287,
-        "Mud_Density": 1199.6384710452498,
-        "Mud_Viscosity": 34.916067258875955,
-        "Mud_PH": 8.498536369838213,
-        "Gamma_Ray": 84.78797495503724,
-        "Resistivity": 19.971936118192943,
-        "Pump_Status": 0.9905850209589226,
-        "Compressor_Status": 0.980301546355133,
-        "Power_Consumption": 200.38560122394142,
-        "Vibration_Level": 0.7988757855927894,
-        "Bit_Temperature": 90.02336580400343,
-        "Motor_Temperature": 74.97714530662503,
-        "Maintenance_Flag": 0
+        "depth": 9.931658328379326,
+        "wob": 1499.1095597598314,
+        "rpm": 80.07053557787066,
+        "torque": 400.37012959454245,
+        "rop": 12.015219277468452,
+        "mud_flow_rate": 1198.5587561221755,
+        "mud_pressure": 2997.1692880682226,
+        "mud_temperature": 60.01337852862287,
+        "mud_density": 1199.6384710452498,
+        "mud_viscosity": 34.916067258875955,
+        "mud_ph": 8.498536369838213,
+        "gamma_ray": 84.78797495503724,
+        "resistivity": 19.971936118192943,
+        "pump_status": 0.9905850209589226,
+        "compressor_status": 0.980301546355133,
+        "power_consumption": 200.38560122394142,
+        "vibration_level": 0.7988757855927894,
+        "bit_temperature": 90.02336580400343,
+        "motor_temperature": 74.97714530662503,
+        "maintenance_flag": 0
     }
 
     max_buffer = 4
-    deselected_columns = ["Timestamp", "Rig_ID", "Failure_Type", "Maintenance_Flag"]
+    deselected_columns = ["timestamp", "rig_id", "failure_type", "maintenance_flag"]
 
     for key, value in message.items():
         if pd.isnull(value) and key not in deselected_columns:
@@ -68,11 +69,11 @@ def handle_binary_values(message):
     return message
 
 def handle_failure_type(message):
-    maintenance_flag = message["Maintenance_Flag"]
-    failure_type = 1 if not pd.isnull(message["Failure_Type"]) else 0
+    maintenance_flag = message["maintenance_flag"]
+    failure_type = 1 if not pd.isnull(message["failure_type"]) else 0
 
     if maintenance_flag != failure_type:
-        message["Anomaly_Flag"] = True
+        message["anomaly_flag"] = True
 
     # if not maintenance_flag and failure_type == 0:
     #     message["Maintenance_Flag"] = 1

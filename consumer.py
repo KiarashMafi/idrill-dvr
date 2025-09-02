@@ -4,6 +4,8 @@ from datetime import datetime
 import pandas as pd
 from collections import defaultdict
 import time
+from database_inserter import insert_message
+from preprocessor import main
 
 # Kafka configuration
 KAFKA_BROKER = 'localhost:9092'
@@ -59,22 +61,21 @@ def process_message(msg):
     if alerts:
         print(f"⚠️ THRESHOLD ALERT for {rig_id}: {' | '.join(alerts)}")
 
-    # This is where all DVR algorithm should be applied on the {data}. data ---> DVR ---> processed_data
-    # print(type(data))
+    data = main(data)
+    insert_message(data)
+    print(f"✅ Inserted message for {data['rig_id']} at {data['timestamp']}")
+
 
     return data
 
 
-def aggregate_data(consumer, duration_seconds=60):
-    """Aggregate data over a time window and display summary"""
-    print(f"\n🚀 Starting consumer. Aggregating data in {duration_seconds}-second windows...")
+def aggregate_data(consumer, duration_seconds=60, max_messages=10):
+    print(f"\n🚀 Starting consumer. Will stop after {max_messages} messages...")
 
+    count = 0
     try:
-        window_start = time.time()
-        window_data = defaultdict(list)
-
-        while True:
-            msg = consumer.poll(timeout=1.0)  # Wait for messages
+        while count < max_messages:
+            msg = consumer.poll(timeout=1.0)
             if msg is None:
                 continue
             if msg.error():
@@ -84,19 +85,13 @@ def aggregate_data(consumer, duration_seconds=60):
             if not data:
                 continue
 
-            rig_id = data['rig_id']
-            window_data[rig_id].append(data)
+            count += 1
 
-            # Check if the time window has elapsed
-            if time.time() - window_start >= duration_seconds:
-                analyze_window(window_data)
-                window_data = defaultdict(list)  # Reset
-                window_start = time.time()
+        print("\n✅ Done consuming messages.")
 
-    except KeyboardInterrupt:
-        print("\n🛑 Stopping consumer...")
     finally:
         consumer.close()
+
 
 
 def analyze_window(window_data):
