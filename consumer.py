@@ -71,22 +71,35 @@ def process_message(msg):
     return data
 
 
-def aggregate_data(consumer, duration_seconds=60):
-    print(f"\n🚀 Starting consumer. Listening indefinitely...")
+def aggregate_data(consumer, duration_seconds=60, max_idle_seconds=10):
+    """
+    Listen for messages for `duration_seconds` or stop if no messages arrive for `max_idle_seconds`.
+    """
+    print(f"\n🚀 Starting consumer. Listening...")
+
+    import time
+    start_time = time.time()
+    last_msg_time = time.time()
 
     try:
         while True:
             msg = consumer.poll(timeout=1.0)
+            # No message received
             if msg is None:
+                # Check if idle time exceeded
+                if time.time() - last_msg_time > max_idle_seconds:
+                    print(f"⏹ No new messages for {max_idle_seconds}s. Stopping consumer.")
+                    break
                 continue
+
             if msg.error():
                 raise KafkaException(msg.error())
 
             process_message(msg)
+            last_msg_time = time.time()
 
     finally:
         consumer.close()
-
 
 
 def analyze_window(window_data):

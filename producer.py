@@ -91,13 +91,14 @@ def generate_sensor_data(device_id, timestamp):
     return data
 
 
-def produce_sensor_data(producer):
+def produce_sensor_data(producer, max_messages=2):
     """Continuously produce sensor data messages"""
     try:
         current_time = start_time
         print(f"🚀 Starting Kafka producer. Sending messages continuously to topic: {TOPIC_NAME}")
+        counter = 0
 
-        while True:
+        while counter<max_messages:
             for device_id in range(1, num_devices + 1):
                 data = generate_sensor_data(device_id, current_time)
 
@@ -110,7 +111,8 @@ def produce_sensor_data(producer):
                 print(f"📤 Sent data for {data['rig_id']} at {data['timestamp']}")
 
                 producer.poll(0)
-
+            print(f"Counter: {counter}")
+            counter += 1
             current_time += timedelta(seconds=freq_seconds)
             sleep(PRODUCE_FREQUENCY)
 
