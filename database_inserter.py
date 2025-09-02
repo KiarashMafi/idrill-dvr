@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS sensor_data (
     bit_temperature DOUBLE,
     motor_temperature DOUBLE,
     maintenance_flag INTEGER,
-    failure_type VARCHAR
+    failure_type VARCHAR,
+    zscore_anomaly BOOLEAN DEFAULT FALSE
 )
 """)
 
@@ -37,7 +38,7 @@ COLUMNS = [
     "mud_pressure", "mud_temperature", "mud_density", "mud_viscosity", "mud_ph",
     "gamma_ray", "resistivity", "pump_status", "compressor_status", "power_consumption",
     "vibration_level", "bit_temperature", "motor_temperature", "maintenance_flag",
-    "failure_type"
+    "failure_type", "zscore_anomaly"
 ]
 
 INSERT_QUERY = f"""
@@ -48,10 +49,7 @@ INSERT OR REPLACE INTO sensor_data (
 
 def insert_message(message: dict):
     """Insert a single message (preprocessed) into DuckDB."""
-
-    import os
-    print("DB path:", os.path.abspath("oilrig.db"))
-
+    message.setdefault("zscore_anomaly", False)
     data = tuple(message.get(col) for col in COLUMNS)
     print("💾 Inserting into DB:", data)
     cursor.execute(INSERT_QUERY, data)

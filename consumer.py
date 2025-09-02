@@ -2,8 +2,7 @@ from confluent_kafka import Consumer, KafkaException
 import json
 from datetime import datetime
 import pandas as pd
-from collections import defaultdict
-import time
+from zscore import calculate_zscore
 from database_inserter import insert_message
 from preprocessor import main
 
@@ -62,32 +61,28 @@ def process_message(msg):
         print(f"⚠️ THRESHOLD ALERT for {rig_id}: {' | '.join(alerts)}")
 
     data = main(data)
+
+    is_anom = calculate_zscore(data)
+    data["zscore_anomaly"] = bool(is_anom)
+
     insert_message(data)
     print(f"✅ Inserted message for {data['rig_id']} at {data['timestamp']}")
-
 
     return data
 
 
-def aggregate_data(consumer, duration_seconds=60, max_messages=10):
-    print(f"\n🚀 Starting consumer. Will stop after {max_messages} messages...")
+def aggregate_data(consumer, duration_seconds=60):
+    print(f"\n🚀 Starting consumer. Listening indefinitely...")
 
-    count = 0
     try:
-        while count < max_messages:
+        while True:
             msg = consumer.poll(timeout=1.0)
             if msg is None:
                 continue
             if msg.error():
                 raise KafkaException(msg.error())
 
-            data = process_message(msg)
-            if not data:
-                continue
-
-            count += 1
-
-        print("\n✅ Done consuming messages.")
+            process_message(msg)
 
     finally:
         consumer.close()
@@ -122,4 +117,3 @@ def analyze_window(window_data):
 if __name__ == "__main__":
     consumer = create_consumer()
     aggregate_data(consumer, duration_seconds=60)
-# Token: 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

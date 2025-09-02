@@ -91,27 +91,28 @@ def generate_sensor_data(device_id, timestamp):
     return data
 
 
-def produce_sensor_data(producer, num_messages=10):
-    """Produce a fixed number of sensor data messages for testing"""
+def produce_sensor_data(producer):
+    """Continuously produce sensor data messages"""
     try:
         current_time = start_time
-        print(f"🚀 Starting Kafka producer. Sending {num_messages} messages to topic: {TOPIC_NAME}")
+        print(f"🚀 Starting Kafka producer. Sending messages continuously to topic: {TOPIC_NAME}")
 
-        for i in range(num_messages):
-            device_id = (i % num_devices) + 1  # cycle through devices
-            data = generate_sensor_data(device_id, current_time)
+        while True:
+            for device_id in range(1, num_devices + 1):
+                data = generate_sensor_data(device_id, current_time)
 
-            producer.produce(
-                TOPIC_NAME,
-                value=json.dumps(data, default=json_serializer).encode('utf-8'),
-                callback=delivery_report
-            )
-            print(f"📤 Sent data for {data['rig_id']} at {data['timestamp']}")
+                producer.produce(
+                    TOPIC_NAME,
+                    value=json.dumps(data, default=json_serializer).encode('utf-8'),
+                    callback=delivery_report
+                )
 
-            producer.poll(0)
+                print(f"📤 Sent data for {data['rig_id']} at {data['timestamp']}")
+
+                producer.poll(0)
+
             current_time += timedelta(seconds=freq_seconds)
-
-        producer.flush()
+            sleep(PRODUCE_FREQUENCY)
 
     except KeyboardInterrupt:
         print("\n🛑 Stopping producer...")
@@ -121,4 +122,4 @@ def produce_sensor_data(producer, num_messages=10):
 
 if __name__ == "__main__":
     producer = create_producer()
-    produce_sensor_data(producer, num_messages=10)
+    produce_sensor_data(producer)
