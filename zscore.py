@@ -1,35 +1,21 @@
-import pandas as pd
-import duckdb
+import numpy as np
 
-conn = duckdb.connect("oilrig.db")
-cursor = conn.cursor()
+def detect_zscore_anomaly(value, mean, std, threshold=3.0):
+    """
+    Detect anomaly using Z-score method.
 
-df = pd.read_csv("rig_sample_10000.csv")
+    Args:
+        value (float): incoming data point
+        mean (float): mean of the feature
+        std (float): standard deviation of the feature
+        threshold (float): z-score threshold, default 3.0
 
-selected_features = [
-    "Depth", "WOB", "RPM", "Torque", "ROP",
-    "Mud_Flow_Rate", "Mud_Pressure", "Mud_Temperature",
-    "Mud_Density", "Mud_Viscosity", "Mud_PH", "Gamma_Ray",
-    "Resistivity", "Power_Consumption", "Vibration_Level",
-    "Bit_Temperature", "Motor_Temperature"
-]
+    Returns:
+        bool: True if anomaly, False otherwise
+        float: computed z-score
+    """
+    if std == 0:
+        return False, 0.0
 
-parameters = {i: (float(df[i].mean()), float(df[i].std())) for i in selected_features}
-
-print(parameters)
-
-z_score_threshold = 3
-
-def calculate_zscore(message):
-    for key in selected_features:
-        x = message[key.lower()]
-        mean, std = parameters[key]
-        if std == 0:
-            return False
-        z_score = (x - mean) / std
-        print(f"Z: {z_score}")
-        if abs(z_score) > z_score_threshold:
-            return True
-    return False
-
-
+    z = (value - mean) / std
+    return abs(z) > threshold, z

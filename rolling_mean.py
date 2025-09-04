@@ -1,39 +1,30 @@
-import pandas as pd
-import psycopg2
+from collections import deque
+import numpy as np
 
-window_size=20
-k = 5
+def init_rolling_window(window_size):
+    """
+    Initialize a rolling window buffer.
+    """
+    return deque(maxlen=window_size)
 
-df = pd.read_csv("output_data/rig_data_10000.csv")
+def update_and_detect_anomaly(buffer, value, threshold=3.0):
+    """
+    Update rolling mean buffer and detect anomalies.
 
-conn = psycopg2.connect(
-    dbname="oilrig",
-    user="postgres",
-    password="1234",
-    host="localhost",
-    port=5432
-)
-cursor = conn.cursor()
+    Args:
+        buffer (deque): rolling window buffer
+        value (float): new incoming data point
+        threshold (float): deviation factor from rolling mean
 
-query = f"""SELECT *
-    FROM sensor_data
-    ORDER BY timestamp DESC
-    LIMIT  {window_size};"""
+    Returns:
+        bool: True if anomaly, False otherwise
+        float: rolling mean
+    """
+    buffer.append(value)
+    if len(buffer) < buffer.maxlen:
+        return False, np.mean(buffer)  # Not enough data yet
 
-cursor.execute(query)
-rows = cursor.fetchall()
-
-columns = [desc[0] for desc in cursor.description]
-result = pd.DataFrame(dict(zip(columns, row)) for row in rows)
-
-print(result)
-
-# for _, row in df.iterrows():
-
-
-
-# for i in
-
-conn.commit()
-cursor.close()
-conn.close()
+    mean = np.mean(buffer)
+    std = np.std(buffer) if np.std(buffer) != 0 else 1e-6
+    z = (value - mean) / std
+    return abs(z) > threshold, mean
